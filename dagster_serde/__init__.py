@@ -8,14 +8,15 @@ __all__ = [
 
 
 try:
-    from dagster_serde.io_managers.json import JsonIOManager # noqa
+    from dagster_serde.io_managers.json import JsonIOManager  # noqa
 
     __all__.append("JsonIOManager")
 except ImportError:
     pass
 
+
 try:
-    from dagster_serde.io_managers.yaml import YamlIOManager # noqa
+    from dagster_serde.io_managers.yaml import YamlIOManager  # noqa
 
     __all__.append("YamlIOManager")
 except ImportError:
