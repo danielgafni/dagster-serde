@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from dataclasses import is_dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, Mapping, Optional, TypeAlias, Union, get_args, get_origin
+from typing import Any, Callable, Dict, Mapping, Optional, Union, get_args, get_origin
 
 from dagster import (
     ConfigurableIOManager,
@@ -13,6 +13,7 @@ from dagster import (
 )
 from dagster import _check as check
 from pydantic.fields import Field, PrivateAttr
+from typing_extensions import TypeAlias
 from upath import UPath
 
 Partitions: TypeAlias = Mapping
@@ -95,8 +96,10 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
             return
         else:
             assert obj is not None, "output should not be None if it's type annotation is not Optional"
-            if annotation_is_dataclass(context.dagster_type.typing_type):
+            if annotation_is_dataclass(context.dagster_type.typing_type) and is_dataclass(object):
                 string = self.serialize_dataclass(obj, context.dagster_type.typing_type)
+            elif is_dataclass(obj):
+                string = self.serialize_dataclass(obj, type(obj))
             else:
                 string = self.serialize_object(obj)
             path.write_text(string)

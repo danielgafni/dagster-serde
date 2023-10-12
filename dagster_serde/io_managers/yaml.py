@@ -1,22 +1,22 @@
 from typing import Any
 
-import orjson
-from serde.json import from_json, to_json
+import yaml
+from serde.yaml import from_yaml, to_yaml
 
 from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 
 
-class JsonIOManager(BaseSerdeUPathIOManager):
-    extension: str = ".json"
+class YamlIOManager(BaseSerdeUPathIOManager):
+    extension: str = ".yaml"
 
     def serialize_dataclass(self, obj: Any, cls: Any) -> str:
-        return to_json(obj, cls=cls)
+        return to_yaml(obj, cls=cls)
 
     def deserialize_dataclass(self, data: str, cls: Any) -> Any:
-        return from_json(cls, data)
+        return from_yaml(cls, data)
 
     def serialize_object(self, obj: Any) -> str:
-        return orjson.dumps(obj).decode()
+        return yaml.safe_dump(obj)
 
     def deserialize_object(self, data: str) -> Any:
-        return orjson.loads(data.encode())
+        return yaml.safe_load(data)

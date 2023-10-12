@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Optional
 from dagster import asset, materialize
 from hypothesis import given, settings
 from hypothesis.strategies import booleans, dictionaries, floats, integers, lists, recursive, text
-from serde.json import from_json
+from serde.yaml import from_yaml
 from upath import UPath
 
-from dagster_serde.io_managers.json import JsonIOManager
+from dagster_serde.io_managers.yaml import YamlIOManager
 from tests.utils import get_saved_path
 
 json = recursive(
@@ -22,8 +22,8 @@ json = recursive(
 
 @given(data=json)
 @settings(max_examples=100, deadline=None)  # type: ignore
-def test_json_io_manager_untyped(tmpdir_factory, data: Any):
-    io_manager = JsonIOManager(base_dir=str(tmpdir_factory.mktemp("json")))
+def test_yaml_io_manager_untyped(tmpdir_factory, data: Any):
+    io_manager = YamlIOManager(base_dir=str(tmpdir_factory.mktemp("yaml")))
 
     @asset(io_manager_def=io_manager)
     def upstream() -> Any:
@@ -38,8 +38,8 @@ def test_json_io_manager_untyped(tmpdir_factory, data: Any):
     )
 
 
-def test_json_io_manager_typed(tmpdir_factory):
-    io_manager = JsonIOManager(base_dir=str(tmpdir_factory.mktemp("json")))
+def test_yaml_io_manager_typed(tmpdir_factory):
+    io_manager = YamlIOManager(base_dir=str(tmpdir_factory.mktemp("json")))
 
     @dataclass
     class MyStruct:
@@ -74,5 +74,5 @@ def test_json_io_manager_typed(tmpdir_factory):
         [upstream, downstream],
     )
     saved_path = get_saved_path(result, "upstream")
-    assert saved_path.endswith(".json")
-    assert from_json(MyStruct, UPath(saved_path).read_text()) == my_struct
+    assert saved_path.endswith(".yaml")
+    assert from_yaml(MyStruct, UPath(saved_path).read_text()) == my_struct
