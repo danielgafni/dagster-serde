@@ -27,7 +27,7 @@ my_struct = MyStruct(foo="bar")
     io_manager_key="json_io_manager",
 )
 def upstream() -> MyStruct:
-    return my_struct  # my_struct is serialized to a json file
+    return my_struct  # my_struct is serialized to a json file (type hint is optional)
 
 
 @asset
@@ -43,14 +43,32 @@ def downstream(
 pip install dagster-serde
 ```
 
+List of available extras:
+ - `json`
+ - `yaml`
+
+For example, to use the `JsonIOManager`, install `dagster-serde[json]`.
+
 # IOManagers
 
 ## `BaseSerdeUPathIOManager`
 Base class for IOManagers that ser/de to/from filesystems.
 
+- Automatically deserializes inputs based on type annotations. If the input annotation is not a supported type, it's returned as a normal built-in type (e.g. `str`, `int`, `dict`, etc.). The supported types are:
+  - `dataclasses.dataclass` and `serde.serde` (using `pyserde`). The full list of supported types can be found [here](https://github.com/yukinarit/pyserde#features).
+  - TODO: add support for other libraries like `pydantic`
+
+- `Optional` type annotations are supported. If the input annotation is `Optional` and is missing in the filesystem, the `IOManager` will skip loading the input and return `None` instead. If the output annotation is `Optional` and the output is `None`, the `IOManager` will skip writing the output to the filesystem.
+
+
 ## `JsonIOManager`
 
-Implements `BaseSerdeUPathIOManager` for JSON files.
+Implements `BaseSerdeUPathIOManager` for JSON files. Uses `orjson`.
+
+
+## `YamlIOManager`
+
+Implements `BaseSerdeUPathIOManager` for YAML files. Uses `pyyaml`.
 
 # Examples
 See [examples](docs/examples.md).
