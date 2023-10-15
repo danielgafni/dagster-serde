@@ -69,20 +69,24 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
         )
 
     @abstractmethod
-    def serialize_dataclass(self, obj: Any, cls: Any) -> str:
-        ...
-
-    @abstractmethod
-    def deserialize_dataclass(self, s: str, cls: Any) -> Any:
-        ...
-
-    @abstractmethod
     def serialize_object(self, obj: Any) -> str:
         ...
 
     @abstractmethod
     def deserialize_object(self, s: str) -> Any:
         ...
+
+    def serialize_dataclass(self, obj: Any, cls: Any) -> str:
+        raise NotImplementedError(f"serialize_dataclass not implemented for {cls}")
+
+    def deserialize_dataclass(self, s: str, cls: Any) -> Any:
+        raise NotImplementedError(f"deserialize_dataclass not implemented for {cls}")
+
+    def serialize_pydantic_model(self, obj: Any, cls: Any) -> str:
+        raise NotImplementedError(f"serialize_pydantic_model not implemented for {cls}")
+
+    def deserialize_pydantic_model(self, s: str, cls: Any) -> "BaseModel":
+        raise NotImplementedError(f"deserialize_pydantic_model not implemented for {cls}")
 
     def dump_to_path(
         self,
