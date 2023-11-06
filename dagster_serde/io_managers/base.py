@@ -96,9 +96,7 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
             return
         else:
             assert obj is not None, "output should not be None if it's type annotation is not Optional"
-            if annotation_is_dataclass(context.dagster_type.typing_type) and is_dataclass(object):
-                string = self.serialize_dataclass(obj, context.dagster_type.typing_type)
-            elif is_dataclass(obj):
+            if is_dataclass(obj):
                 string = self.serialize_dataclass(obj, type(obj))
             else:
                 string = self.serialize_object(obj)
