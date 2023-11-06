@@ -5,6 +5,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  workflow_dispatch:
   push:
   release:
     types:
@@ -15,19 +16,23 @@ on:
 
 jobs:
   test:
-    name: test ${{ matrix.py }} - ${{ matrix.os }}
+    name: test dagster=${{ matrix.dagster_version }} py=${{ matrix.py }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os:
           - Ubuntu
-          - MacOs
+          # MacOs is commented out because: 1. For some reason it's very slow. 2. It never had OS-specific issues
+#          - MacOs
         py:
           - "3.11"
           - "3.10"
           - "3.9"
           - "3.8"
+        dagster_version:
+          - "1.4.0"
+          - "1.5.0"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
@@ -43,11 +48,15 @@ jobs:
           installer-parallel: true
       - name: Install dependencies
         run: poetry install --all-extras --sync
+      - name: Install matrix overrides
+        run: poetry add dagster=~${{ matrix.dagster_version }}&& poetry install --sync --all-extras
+      - name: Print dagster info
+        run: python -c 'import dagster; print(dagster.__version__)'
       - name: Run tests
         run: pytest -v .
 
   lint:
-    name: lint ${{ matrix.py }} - ${{ matrix.os }}
+    name: lint dagster=${{ matrix.dagster_version }} py=${{ matrix.py }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -59,6 +68,9 @@ jobs:
           - "3.10"
           - "3.9"
           - "3.8"
+        dagster_version:
+          - "1.4.0"
+          - "1.5.0"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
@@ -74,11 +86,21 @@ jobs:
           installer-parallel: true
       - name: Install dependencies
         run: poetry install --all-extras --sync
+      - name: Install matrix overrides
+        run: poetry add dagster=~${{ matrix.dagster_version }} && poetry install --sync --all-extras
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
 
-  publish:
+  qa_success:
+    name: QA Success
     needs: [test, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Success
+        run: echo "QA Succeeded!"
+
+  publish:
+    needs: qa_success
     if: contains(github.ref, 'refs/tags/')
     name: Publish to PyPI
     strategy:
