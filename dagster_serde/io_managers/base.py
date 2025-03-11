@@ -80,13 +80,13 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
     def serialize_dataclass(self, obj: Any, cls: Any) -> str: ...
 
     @abstractmethod
-    def deserialize_dataclass(self, s: str, cls: Any) -> Any: ...
+    def deserialize_dataclass(self, data: str, cls: Any) -> Any: ...
 
     @abstractmethod
     def serialize_object(self, obj: Any) -> str: ...
 
     @abstractmethod
-    def deserialize_object(self, s: str) -> Any: ...
+    def deserialize_object(self, data: str) -> Any: ...
 
     def dump_to_path(
         self,
@@ -105,7 +105,7 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
                 string = self.serialize_object(obj)
             path.write_text(string)
 
-    def load_from_path(self, path: UPath, context: InputContext) -> Any:
+    def load_from_path(self, context: InputContext, path: UPath) -> Any:
         if annotation_is_typing_optional(context.dagster_type.typing_type) and not path.exists():
             context.log.warning(self.get_missing_optional_input_log_message(context, path))
             return None

@@ -1,8 +1,6 @@
 import logging
-import warnings
 from typing import Type
 
-import dagster
 import pytest
 import pytest_cases
 from _pytest.tmpdir import TempPathFactory
@@ -12,7 +10,6 @@ from dagster_serde import BaseSerdeUPathIOManager, JsonIOManager, YamlIOManager
 from tests.data import MyDataclass, MyInnerDataclass
 
 logging.getLogger("alembic.runtime.migration").setLevel(logging.WARNING)
-warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
 
 
 @pytest.fixture
@@ -41,7 +38,7 @@ def my_dataclass() -> MyDataclass:
     )
 
 
-@pytest_cases.fixture
+@pytest_cases.fixture  # type: ignore
 @pytest.mark.parametrize(
     "klass",
     [

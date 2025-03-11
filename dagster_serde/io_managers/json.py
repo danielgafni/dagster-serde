@@ -7,7 +7,7 @@ from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 
 
 class JsonIOManager(BaseSerdeUPathIOManager):
-    extension: str = ".json"
+    extension: str = ".json"  # type: ignore
 
     def serialize_dataclass(self, obj: Any, cls: Any) -> str:
         return to_json(obj, cls=cls)
