@@ -3,10 +3,9 @@ from typing import Any
 from dagster import asset, materialize
 from hypothesis import given, settings
 
+from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 from tests.data import MyDataclass
 from tests.strategies import json_like
-
-from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 
 
 @given(data=json_like)

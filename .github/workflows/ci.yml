@@ -26,13 +26,12 @@ jobs:
           # MacOs is commented out because: 1. For some reason it's very slow. 2. It never had OS-specific issues
 #          - MacOs
         py:
+          - "3.12"
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
         dagster_version:
-          - "1.4.0"
-          - "1.5.0"
+          - "1.10.0"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
@@ -64,13 +63,12 @@ jobs:
         os:
           - Ubuntu
         py:
+          - "3.12"
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
         dagster_version:
-          - "1.4.0"
-          - "1.5.0"
+          - "1.10.0"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
@@ -103,8 +101,6 @@ jobs:
     needs: qa_success
     if: contains(github.ref, 'refs/tags/')
     name: Publish to PyPI
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
