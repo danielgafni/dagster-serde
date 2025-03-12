@@ -90,6 +90,11 @@ jobs:
     if: contains(github.ref, 'refs/tags/')
     name: Publish to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     steps:
       - uses: actions/checkout@v2
       - name: Install uv
@@ -101,9 +106,7 @@ jobs:
       - name: Generate Version
         run: export VERSION=$(uv run dunamai from any --style pep440) && echo "Version is $VERSION" && echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Publish to PyPI
-        env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          uv run hatch version ${{ github.ref }}
+          uv run hatch version $VERSION
           uv build
           uv publish
