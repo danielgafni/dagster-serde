@@ -1,16 +1,15 @@
 from typing import Any
 
 from dagster import asset, materialize
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 
+from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 from tests.data import MyDataclass
 from tests.strategies import json_like
 
-from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
-
 
 @given(data=json_like)
-@settings(max_examples=100, deadline=None)  # type: ignore
+@settings(max_examples=100, deadline=None, suppress_health_check=list(HealthCheck))  # type: ignore
 def test_io_manager_untyped(data: Any, serde_io_manager: BaseSerdeUPathIOManager):
     @asset(io_manager_def=serde_io_manager)
     def upstream() -> Any:

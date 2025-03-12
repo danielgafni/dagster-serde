@@ -77,11 +77,11 @@ See [examples](docs/examples.md).
 
 ### Installation
 ```shell
-poetry install
-poetry run pre-commit install
+uv sync
+uv run pre-commit install
 ```
 
 ### Testing
 ```shell
-poetry run pytest
+uv run pytest
 ```

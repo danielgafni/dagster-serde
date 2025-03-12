@@ -16,6 +16,8 @@ from pydantic.fields import Field, PrivateAttr
 from typing_extensions import TypeAlias
 from upath import UPath
 
+from dagster_serde.utils import _process_dagster_env_vars
+
 Partitions: TypeAlias = Mapping
 
 
@@ -29,7 +31,7 @@ def unwrap_optional(
             Any,
         ],
         bool,
-    ]
+    ],
 ):
     @wraps(condition)
     def inner(annotation: Any):
@@ -59,31 +61,32 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
     """
 
     base_dir: Optional[str] = Field(default=None, description="Base directory for storing files.")
-
+    cloud_storage_options: Optional[Mapping[str, Any]] = Field(
+        default=None, description="fsspec storage options.", alias="storage_options"
+    )
     _base_path: UPath = PrivateAttr()
 
     def setup_for_execution(self, context: InitResourceContext) -> None:
         self._base_path = (
-            UPath(self.base_dir)
+            UPath(
+                self.base_dir,
+                **_process_dagster_env_vars(self.cloud_storage_options if self.cloud_storage_options else {}),
+            )
             if self.base_dir is not None
             else UPath(check.not_none(context.instance).storage_directory())
         )
 
     @abstractmethod
-    def serialize_dataclass(self, obj: Any, cls: Any) -> str:
-        ...
+    def serialize_dataclass(self, obj: Any, cls: Any) -> str: ...
 
     @abstractmethod
-    def deserialize_dataclass(self, s: str, cls: Any) -> Any:
-        ...
+    def deserialize_dataclass(self, data: str, cls: Any) -> Any: ...
 
     @abstractmethod
-    def serialize_object(self, obj: Any) -> str:
-        ...
+    def serialize_object(self, obj: Any) -> str: ...
 
     @abstractmethod
-    def deserialize_object(self, s: str) -> Any:
-        ...
+    def deserialize_object(self, data: str) -> Any: ...
 
     def dump_to_path(
         self,
@@ -102,7 +105,7 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
                 string = self.serialize_object(obj)
             path.write_text(string)
 
-    def load_from_path(self, path: UPath, context: InputContext) -> Any:
+    def load_from_path(self, context: InputContext, path: UPath) -> Any:
         if annotation_is_typing_optional(context.dagster_type.typing_type) and not path.exists():
             context.log.warning(self.get_missing_optional_input_log_message(context, path))
             return None
@@ -119,17 +122,6 @@ class BaseSerdeUPathIOManager(ConfigurableIOManager, UPathIOManager):
             return {"missing": MetadataValue.bool(True)}
         else:
             return {}
-
-    @staticmethod
-    def get_storage_options(path: UPath) -> dict:
-        storage_options = {}
-
-        try:
-            storage_options.update(path._kwargs.copy())
-        except AttributeError:
-            pass
-
-        return storage_options
 
     def get_missing_optional_input_log_message(self, context: InputContext, path: UPath) -> str:
         return f"Optional input {context.name} at {path} doesn't exist in the filesystem and won't be loaded!"

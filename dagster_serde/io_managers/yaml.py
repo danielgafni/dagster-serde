@@ -7,7 +7,7 @@ from dagster_serde.io_managers.base import BaseSerdeUPathIOManager
 
 
 class YamlIOManager(BaseSerdeUPathIOManager):
-    extension: str = ".yaml"
+    extension: str = ".yaml"  # type: ignore
 
     def serialize_dataclass(self, obj: Any, cls: Any) -> str:
         return to_yaml(obj, cls=cls)

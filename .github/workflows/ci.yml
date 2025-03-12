@@ -29,31 +29,24 @@ jobs:
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
         dagster_version:
-          - "1.4.0"
-          - "1.5.0"
+          - "1.10.0"
     steps:
-      - name: Setup python for test ${{ matrix.py }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.py }}
       - uses: actions/checkout@v2
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 1.4.2
-          virtualenvs-create: false
-          virtualenvs-in-project: false
-          installer-parallel: true
+          version: "0.6.5"
+          python-version: "${{ matrix.py }}"
+          enable-cache: true
       - name: Install dependencies
-        run: poetry install --all-extras --sync
+        run: uv sync
       - name: Install matrix overrides
-        run: poetry add dagster=~${{ matrix.dagster_version }}&& poetry install --sync --all-extras
+        run: uv add dagster~=${{ matrix.dagster_version }}
       - name: Print dagster info
-        run: python -c 'import dagster; print(dagster.__version__)'
+        run: uv run python -c 'import dagster; print(dagster.__version__)'
       - name: Run tests
-        run: pytest -v .
+        run: uv run pytest -v .
 
   lint:
     name: lint dagster=${{ matrix.dagster_version }} py=${{ matrix.py }} ${{ matrix.os }}
@@ -67,29 +60,22 @@ jobs:
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
         dagster_version:
-          - "1.4.0"
-          - "1.5.0"
+          - "1.10.0"
     steps:
-      - name: Setup python for test ${{ matrix.py }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.py }}
       - uses: actions/checkout@v2
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 1.4.2
-          virtualenvs-create: false
-          virtualenvs-in-project: false
-          installer-parallel: true
+          version: "0.6.5"
+          python-version: "${{ matrix.py }}"
+          enable-cache: true
       - name: Install dependencies
-        run: poetry install --all-extras --sync
+        run: uv sync
       - name: Install matrix overrides
-        run: poetry add dagster=~${{ matrix.dagster_version }} && poetry install --sync --all-extras
+        run: uv add dagster~=${{ matrix.dagster_version }}
       - name: Run pre-commit hooks
-        run: pre-commit run --all-files
+        run: uv run pre-commit run --all-files
 
   qa_success:
     name: QA Success
@@ -103,27 +89,21 @@ jobs:
     needs: qa_success
     if: contains(github.ref, 'refs/tags/')
     name: Publish to PyPI
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
       - uses: actions/checkout@v2
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 1.4.2
-          virtualenvs-create: false
-          virtualenvs-in-project: false
-          installer-parallel: true
-      - name: Install poetry-dynamic-versioning
-        run: poetry self add poetry-dynamic-versioning@0.21.4
+          version: "0.6.5"
+          python-version: "3.11"
+          enable-cache: true
+      - name: Generate Version
+        run: export VERSION=$(uv run dunamai from any --style pep440) && echo "Version is $VERSION" && echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Publish to PyPI
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish --build
+          uv run hatch version ${{ github.ref }}
+          uv build
+          uv publish
